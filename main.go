@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 	"trevoga-control/anxiety"
+	simpleconnect "trevoga-control/feature_postgres/simple_connect"
 	"trevoga-control/router"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -16,6 +17,8 @@ func main() {
 
 	//выгружаю данные из файла
 	anxiety.StartLoadAnxietyFromJSON(&anxiety.AnxietyStorage)
+
+	simpleconnect.CheckConnect()
 	// Создаём объект бота, передаём токен.
 	// Библиотека сама настроит URL, проверит токен и т.п.
 	err := godotenv.Load()
