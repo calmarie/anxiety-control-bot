@@ -1,14 +1,17 @@
 package anxiety
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
+	querydb "trevoga-control/feature_postgres/query_db"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/jackc/pgx/v5"
 )
 
-func HandleAnxityMenuCallback(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
+func HandleAnxityMenuCallback(bot *tgbotapi.BotAPI, update *tgbotapi.Update, ctx context.Context, conn *pgx.Conn) {
 	callbackQuery := update.CallbackQuery
 	chatID := callbackQuery.Message.Chat.ID
 	callback := tgbotapi.NewCallback(callbackQuery.ID, "")
@@ -18,26 +21,25 @@ func HandleAnxityMenuCallback(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	case suffix == "write":
 		AskAnxietyLevel(bot, callbackQuery)
 	case suffix == "look":
-		SendAnxietyHistory(AnxietyStorage, bot, callbackQuery)
+		SendAnxietyHistory(bot, callbackQuery, ctx, conn)
 	case suffix == "stats":
-		AnxietyStats(AnxietyStorage, chatID, bot)
+		AnxietyStats(chatID, bot, ctx, conn)
 	}
 
 }
 
-func HandleAnxietyMessage(bot *tgbotapi.BotAPI, update *tgbotapi.Update) bool {
+func HandleAnxietyMessage(bot *tgbotapi.BotAPI, update *tgbotapi.Update, ctx context.Context, conn *pgx.Conn) bool {
 	chatID := update.Message.Chat.ID
 	switch userStates[chatID] {
 	case StateWaitingDetailedThought:
 
-		SaveAnxietyData(
+		model := SaveAnxietyToDB(
 			chatID,
 			tempLevel[chatID],
 			tempCause[chatID],
 			update.Message.Text,
 		)
-
-		SaveAnxietyToJSON(&AnxietyStorage)
+		querydb.HandleAnxRow(ctx, conn, model)
 
 		//для удобства отладки
 		fmt.Println()

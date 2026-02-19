@@ -1,11 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"time"
-	"trevoga-control/anxiety"
-	simpleconnect "trevoga-control/feature_postgres/simple_connect"
+	"trevoga-control/feature_postgres/connect"
+	querydb "trevoga-control/feature_postgres/query_db"
 	"trevoga-control/router"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -16,12 +17,16 @@ import (
 func main() {
 
 	//выгружаю данные из файла
-	anxiety.StartLoadAnxietyFromJSON(&anxiety.AnxietyStorage)
+	ctx := context.Background()
+	conn, err := connect.CreateConnect(ctx)
+	if err != nil {
+		log.Panicln(err)
+	}
+	querydb.CreateAnxTable(ctx, conn)
 
-	simpleconnect.CheckConnect()
 	// Создаём объект бота, передаём токен.
 	// Библиотека сама настроит URL, проверит токен и т.п.
-	err := godotenv.Load()
+	err = godotenv.Load()
 	if err != nil {
 		log.Println("Файл .env не найден, используем переменные окружения системы")
 	}
@@ -72,10 +77,10 @@ func main() {
 		// Некоторые апдейты могут не содержать Message (например, callback_query, edited_message и т.п.).
 		if update.Message != nil {
 
-			router.HandleMessage(bot, &update)
+			router.HandleMessage(bot, &update, ctx, conn)
 
 		} else if update.CallbackQuery != nil {
-			router.HandleCallback(bot, &update)
+			router.HandleCallback(bot, &update, ctx, conn)
 		}
 
 	}
