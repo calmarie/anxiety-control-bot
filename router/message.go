@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"trevoga-control/anxiety"
@@ -8,15 +9,16 @@ import (
 	"trevoga-control/state"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/jackc/pgx/v5"
 )
 
-func HandleMessage(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
+func HandleMessage(bot *tgbotapi.BotAPI, update *tgbotapi.Update, ctx context.Context, conn *pgx.Conn) {
 	// Логируем в консоль: от кого сообщение и какой текст.
 	fmt.Println()
 	log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 	fmt.Println()
 
-	if anxiety.HandleAnxietyMessage(bot, update) {
+	if anxiety.HandleAnxietyMessage(bot, update, ctx, conn) {
 		return // сообщение обработано SM
 	}
 

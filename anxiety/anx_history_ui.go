@@ -1,18 +1,23 @@
 package anxiety
 
 import (
+	"context"
 	"fmt"
+	myerror "trevoga-control/Myerror"
+	querydb "trevoga-control/feature_postgres/query_db"
 	"trevoga-control/navigation"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/jackc/pgx/v5"
 )
 
-func SendAnxietyHistory(anxietyStorage map[int64][]AnxietyEntry, bot *tgbotapi.BotAPI, callbackQuery *tgbotapi.CallbackQuery) {
+func SendAnxietyHistory(bot *tgbotapi.BotAPI, callbackQuery *tgbotapi.CallbackQuery, ctx context.Context, conn *pgx.Conn) {
 	chatID := callbackQuery.Message.Chat.ID
 	text := "Вот что ты переживал за все это время:"
-	AnxietyHistory := anxietyStorage[chatID]
-	for _, v := range AnxietyHistory {
-		time := v.Time
+	anxData := querydb.GetAnxDataFromDB(ctx, conn, chatID)
+
+	for _, v := range anxData {
+		time := string(v.Time.Format("02/01/2006 15:04"))
 		shortReason := DecryptAnxietyShortReason(v.ShortReason)
 		detailedReason := v.DetailedReason
 		text += fmt.Sprintf("\n\nВремя: %s", time)
@@ -22,7 +27,7 @@ func SendAnxietyHistory(anxietyStorage map[int64][]AnxietyEntry, bot *tgbotapi.B
 		text += "\n---------------------"
 
 	}
-	text += fmt.Sprintf("\nВсего записей: %d", len(AnxietyHistory))
+	text += fmt.Sprintf("\nВсего записей: %d", len(anxData))
 
 	editMsg := tgbotapi.NewEditMessageText(
 		callbackQuery.Message.Chat.ID,
@@ -31,7 +36,10 @@ func SendAnxietyHistory(anxietyStorage map[int64][]AnxietyEntry, bot *tgbotapi.B
 	)
 	keys := tgbotapi.NewInlineKeyboardMarkup(navigation.RowBack)
 	editMsg.ReplyMarkup = &keys
-	bot.Send(editMsg)
+	_, err := bot.Send(editMsg)
+	if err != nil {
+		myerror.ReturnError(err)
+	}
 }
 
 func DecryptAnxietyShortReason(code string) string {
