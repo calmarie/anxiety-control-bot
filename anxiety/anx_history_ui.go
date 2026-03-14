@@ -11,7 +11,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func SendAnxietyHistory(bot *tgbotapi.BotAPI, callbackQuery *tgbotapi.CallbackQuery, ctx context.Context, conn *pgx.Conn) {
+func SendAnxietyHistory(bot *tgbotapi.BotAPI, update *tgbotapi.Update, ctx context.Context, conn *pgx.Conn) {
+	callbackQuery := update.CallbackQuery
 	chatID := callbackQuery.Message.Chat.ID
 	text := "Вот что ты переживал за все это время:"
 	anxData := querydb.GetAnxDataFromDB(ctx, conn, chatID)

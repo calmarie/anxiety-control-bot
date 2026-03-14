@@ -8,6 +8,7 @@ const (
 	StateWaitingDetailedThought
 )
 
-var userStates = make(map[int64]AnxietyState)
+var anxietyStates = make(map[int64]AnxietyState)
+
 var tempLevel = make(map[int64]int)
 var tempCause = make(map[int64]string)

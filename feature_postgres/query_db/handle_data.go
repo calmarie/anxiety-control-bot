@@ -19,3 +19,50 @@ func HandleAnxRow(ctx context.Context, conn *pgx.Conn, model models.AnxietyModel
 		panic(err)
 	}
 }
+
+func HandleUpdateAnxRow(ctx context.Context, conn *pgx.Conn, model models.AnxietyModel) {
+	level := 0
+	cause := "_"
+	detCause := "_"
+	sqlQuery := `
+	SELECT * FROM anx ORDER BY time DESC LIMIT 1
+	`
+	row, err := conn.Query(ctx, sqlQuery)
+	if err != nil {
+		panic(err)
+	}
+	var pgStruct models.AnxietyModel
+	pgStruct, err = pgx.CollectOneRow(row, pgx.RowToStructByName[models.AnxietyModel])
+
+	if pgStruct.Level != 0 {
+		level = pgStruct.Level
+	} else if model.Level != 0 {
+		level = model.Level
+	}
+
+	if pgStruct.ShortReason != "_" {
+		cause = pgStruct.ShortReason
+	} else if model.ShortReason != "_" {
+		cause = model.ShortReason
+	}
+
+	if pgStruct.DetailedReason != "_" {
+		detCause = pgStruct.DetailedReason
+	} else if model.DetailedReason != "_" {
+		detCause = model.DetailedReason
+	}
+
+	sqlQuery = `
+	UPDATE anx
+	SET level = '$2'
+	SET short_reason = '$3'
+	SET detailed_reason = '$4'
+	WHERE query_id = '$1'
+	`
+
+	_, err = conn.Exec(ctx, sqlQuery, pgStruct.QueryID, level, cause, detCause)
+
+	if err != nil {
+		panic(err)
+	}
+}

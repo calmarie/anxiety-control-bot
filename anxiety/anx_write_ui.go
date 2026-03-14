@@ -1,29 +1,31 @@
 package anxiety
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"trevoga-control/navigation"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/jackc/pgx/v5"
 )
 
-func AskAnxietyLevel(bot *tgbotapi.BotAPI, callbackQuery *tgbotapi.CallbackQuery) {
-
+func AskAnxietyLevel(bot *tgbotapi.BotAPI, update *tgbotapi.Update, ctx context.Context, conn *pgx.Conn) {
+	callbackQuery := update.CallbackQuery
 	row1 := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("1", "anx_1"),
-		tgbotapi.NewInlineKeyboardButtonData("2", "anx_2"),
-		tgbotapi.NewInlineKeyboardButtonData("3", "anx_3"),
-		tgbotapi.NewInlineKeyboardButtonData("4", "anx_4"),
-		tgbotapi.NewInlineKeyboardButtonData("5", "anx_5"),
+		tgbotapi.NewInlineKeyboardButtonData("1", "anx_lvl_1"),
+		tgbotapi.NewInlineKeyboardButtonData("2", "anx_lvl_2"),
+		tgbotapi.NewInlineKeyboardButtonData("3", "anx_lvl_3"),
+		tgbotapi.NewInlineKeyboardButtonData("4", "anx_lvl_4"),
+		tgbotapi.NewInlineKeyboardButtonData("5", "anx_lvl_5"),
 	)
 
 	row2 := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("6", "anx_6"),
-		tgbotapi.NewInlineKeyboardButtonData("7", "anx_7"),
-		tgbotapi.NewInlineKeyboardButtonData("8", "anx_8"),
-		tgbotapi.NewInlineKeyboardButtonData("9", "anx_9"),
-		tgbotapi.NewInlineKeyboardButtonData("10", "anx_10"),
+		tgbotapi.NewInlineKeyboardButtonData("6", "anx_lvl_6"),
+		tgbotapi.NewInlineKeyboardButtonData("7", "anx_lvl_7"),
+		tgbotapi.NewInlineKeyboardButtonData("8", "anx_lvl_8"),
+		tgbotapi.NewInlineKeyboardButtonData("9", "anx_lvl_9"),
+		tgbotapi.NewInlineKeyboardButtonData("10", "anx_lvl_10"),
 	)
 	keys := tgbotapi.NewInlineKeyboardMarkup(row1, row2, navigation.RowBack)
 
@@ -43,24 +45,24 @@ func AskAnxietyLevel(bot *tgbotapi.BotAPI, callbackQuery *tgbotapi.CallbackQuery
 
 func AskAnxietyCause(bot *tgbotapi.BotAPI, callbackQuery *tgbotapi.CallbackQuery) {
 	row1 := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Здоровье", "anxCause_health"),
-		tgbotapi.NewInlineKeyboardButtonData("Деньги", "anxCause_money"),
+		tgbotapi.NewInlineKeyboardButtonData("Здоровье", "anx_cause_health"),
+		tgbotapi.NewInlineKeyboardButtonData("Деньги", "anx_cause_money"),
 	)
 	row2 := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Окружение", "anxCause_people"),
-		tgbotapi.NewInlineKeyboardButtonData("Партнер", "anxCause_pair"),
+		tgbotapi.NewInlineKeyboardButtonData("Окружение", "anx_cause_people"),
+		tgbotapi.NewInlineKeyboardButtonData("Партнер", "anx_cause_pair"),
 	)
 	row3 := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Работа", "anxCause_job"),
-		tgbotapi.NewInlineKeyboardButtonData("Образование", "anxCause_edu"),
+		tgbotapi.NewInlineKeyboardButtonData("Работа", "anx_cause_job"),
+		tgbotapi.NewInlineKeyboardButtonData("Образование", "anx_cause_edu"),
 	)
 	row4 := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Текущие обстоятельства", "anxCause_currant"),
-		tgbotapi.NewInlineKeyboardButtonData("Другое", "anxCause_other"),
+		tgbotapi.NewInlineKeyboardButtonData("Текущие обстоятельства", "anx_cause_currant"),
+		tgbotapi.NewInlineKeyboardButtonData("Другое", "anx_cause_other"),
 	)
 	keys := tgbotapi.NewInlineKeyboardMarkup(row1, row2, row3, row4, navigation.RowBack)
 
-	level, _ := strconv.Atoi(string(callbackQuery.Data[4]))
+	level, _ := strconv.Atoi(string(callbackQuery.Data[len(callbackQuery.Data)-1]))
 	newText := fmt.Sprintf("Ваш уровень тревоги: %d/10. \n В чем причина тревоги?", level)
 	editMsg := tgbotapi.NewEditMessageText(
 		callbackQuery.Message.Chat.ID,
@@ -97,4 +99,5 @@ func AskAnxietyFinish(bot *tgbotapi.BotAPI, chatID int64) {
 	msg := tgbotapi.NewMessage(chatID, "Записал. Спасибо 🙏")
 	msg.ReplyMarkup = keys
 	bot.Send(msg)
+
 }

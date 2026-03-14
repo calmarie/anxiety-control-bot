@@ -38,21 +38,25 @@ func Start(bot *tgbotapi.BotAPI, chatID int64) {
 	bot.Send(msg)
 }
 
-func SendFuncs(bot *tgbotapi.BotAPI, chatID int64, msgID int, back bool) {
+func SendFuncs(bot *tgbotapi.BotAPI, update *tgbotapi.Update, back bool) {
+
 	row_anxiety := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Поработать с тревогой", "work_anxiety"),
+		tgbotapi.NewInlineKeyboardButtonData("Поработать с тревогой", "menu_anxiety_"),
 	)
 	row_breathe := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Заземлиться/подышать", "work_breathe"),
+		tgbotapi.NewInlineKeyboardButtonData("Заземлиться/подышать", "menu_breathe_"),
 	)
 	row_praise := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Дневник похвалы", "work_praise"),
+		tgbotapi.NewInlineKeyboardButtonData("Дневник похвалы", "menu_praise_"),
 	)
 	row_stats := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Посмотреть статистику", "work_stats"),
+		tgbotapi.NewInlineKeyboardButtonData("Посмотреть статистику", "menu_stats_"),
 	)
 	keys := tgbotapi.NewInlineKeyboardMarkup(row_anxiety, row_breathe, row_praise, row_stats)
+
 	if back {
+		chatID := update.CallbackQuery.Message.Chat.ID
+		msgID := update.CallbackQuery.Message.MessageID
 		editMsg := tgbotapi.NewEditMessageText(chatID, msgID, "Выбирай то, что хочешь сейчас:")
 		editMsg.ReplyMarkup = &keys
 		_, err := bot.Send(editMsg)
@@ -60,6 +64,8 @@ func SendFuncs(bot *tgbotapi.BotAPI, chatID int64, msgID int, back bool) {
 			log.Println(err)
 		}
 	} else {
+		chatID := update.Message.Chat.ID
+
 		msg := tgbotapi.NewMessage(chatID, "Выбирай то, что хочешь сейчас:")
 		msg.ReplyMarkup = keys
 		bot.Send(msg)

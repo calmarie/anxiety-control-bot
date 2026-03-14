@@ -12,7 +12,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func AnxietyStats(chatID int64, bot *tgbotapi.BotAPI, ctx context.Context, conn *pgx.Conn) {
+func AnxietyStats(bot *tgbotapi.BotAPI, update *tgbotapi.Update, ctx context.Context, conn *pgx.Conn) {
+	chatID := update.CallbackQuery.Message.Chat.ID
 	// Implement statistics calculation logic here
 	anxData := querydb.GetAnxDataFromDB(ctx, conn, chatID)
 
@@ -82,4 +83,5 @@ func AnxietyStats(chatID int64, bot *tgbotapi.BotAPI, ctx context.Context, conn 
 
 	msg := tgbotapi.NewMessage(chatID, text)
 	bot.Send(msg)
+
 }
