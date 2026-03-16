@@ -12,27 +12,6 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// func HandleAnxityMenuCallback(bot *tgbotapi.BotAPI, update *tgbotapi.Update, ctx context.Context, conn *pgx.Conn) {
-// 	callbackQuery := update.CallbackQuery
-// 	chatID := callbackQuery.Message.Chat.ID
-// 	callback := tgbotapi.NewCallback(callbackQuery.ID, "")
-// 	_, err := bot.Request(callback)
-// 	if err != nil {
-// 		log.Println("error: Request callback bad")
-
-// 	}
-// 	suffix := strings.TrimPrefix(string(state.StateHistory[chatID][len(state.StateHistory[chatID])-1]), "anx_diary_")
-// 	switch {
-// 	case suffix == "write_":
-// 		AskAnxietyLevel(bot, callbackQuery)
-// 	case suffix == "history_":
-// 		SendAnxietyHistory(bot, callbackQuery, ctx, conn)
-// 	case suffix == "stats_":
-// 		AnxietyStats(chatID, bot, ctx, conn)
-// 	}
-
-// }
-
 func HandleAnxietyWriteDetCause(bot *tgbotapi.BotAPI, update *tgbotapi.Update, ctx context.Context, conn *pgx.Conn) bool {
 	chatID := update.Message.Chat.ID
 	switch {
@@ -41,7 +20,7 @@ func HandleAnxietyWriteDetCause(bot *tgbotapi.BotAPI, update *tgbotapi.Update, c
 
 	case state.StateAnxWriteCause == state.StateHistory[chatID][len(state.StateHistory[chatID])-1]:
 
-		model := SaveAnxietyToDB(
+		model := SaveAnxietyToModel(
 			chatID,
 			0,
 			"gap",
@@ -86,7 +65,7 @@ func HandleAnxietyWriteCallback(bot *tgbotapi.BotAPI, update *tgbotapi.Update, c
 		AskAnxietyCause(bot, callbackQuery)
 		if callbackQuery.Data != string(state.StateBack) {
 			level, _ := strconv.Atoi(string(callbackQuery.Data[len(callbackQuery.Data)-1]))
-			model := SaveAnxietyToDB(
+			model := SaveAnxietyToModel(
 				chatID,
 				level,
 				"gap",
@@ -95,7 +74,7 @@ func HandleAnxietyWriteCallback(bot *tgbotapi.BotAPI, update *tgbotapi.Update, c
 
 			querydb.HandleAnxRow(ctx, conn, model)
 		} else {
-			model := SaveAnxietyToDB(
+			model := SaveAnxietyToModel(
 				chatID,
 				0,
 				"gap",
@@ -107,7 +86,7 @@ func HandleAnxietyWriteCallback(bot *tgbotapi.BotAPI, update *tgbotapi.Update, c
 	case state.StateAnxWriteCause == state.StateHistory[chatID][len(state.StateHistory[chatID])-1]:
 		if callbackQuery.Data != string(state.StateBack) {
 			cause := strings.TrimPrefix(callbackQuery.Data, "anx_cause_")
-			model := SaveAnxietyToDB(
+			model := SaveAnxietyToModel(
 				chatID,
 				0,
 				cause,
@@ -119,6 +98,7 @@ func HandleAnxietyWriteCallback(bot *tgbotapi.BotAPI, update *tgbotapi.Update, c
 		AskAnxietyDetailedCause(bot, callbackQuery)
 
 	default:
+		log.Println("error: no anxiety handlers approach")
 		bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "нет таких откликов"))
 	}
 
