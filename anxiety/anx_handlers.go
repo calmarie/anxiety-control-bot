@@ -2,7 +2,6 @@ package anxiety
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -36,25 +35,23 @@ import (
 
 func HandleAnxietyWriteDetCause(bot *tgbotapi.BotAPI, update *tgbotapi.Update, ctx context.Context, conn *pgx.Conn) bool {
 	chatID := update.Message.Chat.ID
-	switch anxietyStates[chatID] {
-	case StateWaitingDetailedThought:
+	switch {
+	case len(state.StateHistory[chatID]) == 0:
+		return false
+
+	case state.StateAnxWriteCause == state.StateHistory[chatID][len(state.StateHistory[chatID])-1]:
 
 		model := SaveAnxietyToDB(
 			chatID,
-			tempLevel[chatID],
-			tempCause[chatID],
+			0,
+			"gap",
 			update.Message.Text,
 		)
-		querydb.HandleAnxRow(ctx, conn, model)
+		querydb.HandleUpdateAnxRow(ctx, conn, model)
 
 		//для удобства отладки
-		fmt.Println()
-		fmt.Println()
-		fmt.Println(chatID, tempLevel[chatID], tempCause[chatID], update.Message.Text)
-		fmt.Println()
-		//
 
-		anxietyStates[chatID] = StateIdle
+		//
 
 		AskAnxietyFinish(bot, chatID)
 
@@ -87,16 +84,37 @@ func HandleAnxietyWriteCallback(bot *tgbotapi.BotAPI, update *tgbotapi.Update, c
 	case state.StateAnxWriteLevel == state.StateHistory[chatID][len(state.StateHistory[chatID])-1]:
 
 		AskAnxietyCause(bot, callbackQuery)
-		level, _ := strconv.Atoi(string(callbackQuery.Data[len(callbackQuery.Data)-1]))
-		tempLevel[chatID] = level
-		anxietyStates[chatID] = StateWaitingCauseCategory
-		AskAnxietyCause(bot, callbackQuery)
+		if callbackQuery.Data != string(state.StateBack) {
+			level, _ := strconv.Atoi(string(callbackQuery.Data[len(callbackQuery.Data)-1]))
+			model := SaveAnxietyToDB(
+				chatID,
+				level,
+				"gap",
+				"gap",
+			)
+
+			querydb.HandleAnxRow(ctx, conn, model)
+		} else {
+			model := SaveAnxietyToDB(
+				chatID,
+				0,
+				"gap",
+				"gap",
+			)
+			querydb.HandleUpdateAnxRow(ctx, conn, model)
+		}
 
 	case state.StateAnxWriteCause == state.StateHistory[chatID][len(state.StateHistory[chatID])-1]:
-
-		cause := strings.TrimPrefix(callbackQuery.Data, "anx_cause_")
-		tempCause[chatID] = cause
-		anxietyStates[chatID] = StateWaitingDetailedThought
+		if callbackQuery.Data != string(state.StateBack) {
+			cause := strings.TrimPrefix(callbackQuery.Data, "anx_cause_")
+			model := SaveAnxietyToDB(
+				chatID,
+				0,
+				cause,
+				"gap",
+			)
+			querydb.HandleUpdateAnxRow(ctx, conn, model)
+		}
 
 		AskAnxietyDetailedCause(bot, callbackQuery)
 

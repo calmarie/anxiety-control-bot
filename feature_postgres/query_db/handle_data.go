@@ -2,6 +2,7 @@ package querydb
 
 import (
 	"context"
+	"log"
 	"trevoga-control/feature_postgres/models"
 
 	"github.com/jackc/pgx/v5"
@@ -22,8 +23,8 @@ func HandleAnxRow(ctx context.Context, conn *pgx.Conn, model models.AnxietyModel
 
 func HandleUpdateAnxRow(ctx context.Context, conn *pgx.Conn, model models.AnxietyModel) {
 	level := 0
-	cause := "_"
-	detCause := "_"
+	cause := "gap"
+	detCause := "gap"
 	sqlQuery := `
 	SELECT * FROM anx ORDER BY time DESC LIMIT 1
 	`
@@ -32,7 +33,20 @@ func HandleUpdateAnxRow(ctx context.Context, conn *pgx.Conn, model models.Anxiet
 		panic(err)
 	}
 	var pgStruct models.AnxietyModel
-	pgStruct, err = pgx.CollectOneRow(row, pgx.RowToStructByName[models.AnxietyModel])
+	for row.Next() {
+		err := row.Scan(
+			&pgStruct.QueryID,
+			&pgStruct.ChatID,
+			&pgStruct.Time,
+			&pgStruct.Level,
+			&pgStruct.ShortReason,
+			&pgStruct.DetailedReason,
+		)
+		if err != nil {
+			panic(err)
+		}
+
+	}
 
 	if pgStruct.Level != 0 {
 		level = pgStruct.Level
@@ -40,24 +54,24 @@ func HandleUpdateAnxRow(ctx context.Context, conn *pgx.Conn, model models.Anxiet
 		level = model.Level
 	}
 
-	if pgStruct.ShortReason != "_" {
+	if pgStruct.ShortReason != "gap" {
 		cause = pgStruct.ShortReason
-	} else if model.ShortReason != "_" {
+	} else if model.ShortReason != "gap" {
 		cause = model.ShortReason
 	}
 
-	if pgStruct.DetailedReason != "_" {
+	if pgStruct.DetailedReason != "gap" {
 		detCause = pgStruct.DetailedReason
-	} else if model.DetailedReason != "_" {
+	} else if model.DetailedReason != "gap" {
 		detCause = model.DetailedReason
 	}
-
+	log.Println(level, cause, detCause, pgStruct, model)
 	sqlQuery = `
 	UPDATE anx
-	SET level = '$2'
-	SET short_reason = '$3'
-	SET detailed_reason = '$4'
-	WHERE query_id = '$1'
+	SET level = $2,
+		short_reason = $3,
+		detailed_reason = $4
+	WHERE query_id = $1
 	`
 
 	_, err = conn.Exec(ctx, sqlQuery, pgStruct.QueryID, level, cause, detCause)

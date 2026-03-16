@@ -2,8 +2,7 @@ package anxiety
 
 import (
 	"context"
-	"fmt"
-	"strconv"
+
 	"trevoga-control/navigation"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -62,8 +61,7 @@ func AskAnxietyCause(bot *tgbotapi.BotAPI, callbackQuery *tgbotapi.CallbackQuery
 	)
 	keys := tgbotapi.NewInlineKeyboardMarkup(row1, row2, row3, row4, navigation.RowBack)
 
-	level, _ := strconv.Atoi(string(callbackQuery.Data[len(callbackQuery.Data)-1]))
-	newText := fmt.Sprintf("Ваш уровень тревоги: %d/10. \n В чем причина тревоги?", level)
+	newText := "Что вызвало тревогу?"
 	editMsg := tgbotapi.NewEditMessageText(
 		callbackQuery.Message.Chat.ID,
 		callbackQuery.Message.MessageID,
