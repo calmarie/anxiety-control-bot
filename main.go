@@ -80,6 +80,8 @@ func main() {
 			router.HandleMessage(bot, &update, ctx, conn)
 
 		} else if update.CallbackQuery != nil {
+			// router.AppendState(&update)
+			router.AppendState(&update)
 			router.HandleCallback(bot, &update, ctx, conn)
 		}
 

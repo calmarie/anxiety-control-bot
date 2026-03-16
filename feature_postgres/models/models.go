@@ -3,9 +3,10 @@ package models
 import "time"
 
 type AnxietyModel struct {
-	ChatID         int
-	Time           time.Time
-	Level          int
-	ShortReason    string
-	DetailedReason string
+	QueryID        int       `db:"query_reason"`
+	ChatID         int       `db:"tg_id"`
+	Time           time.Time `db:"time"`
+	Level          int       `db:"level"`
+	ShortReason    string    `db:"short_reason"`
+	DetailedReason string    `db:"detailed_reason"`
 }

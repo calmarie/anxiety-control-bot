@@ -18,21 +18,22 @@ func HandleMessage(bot *tgbotapi.BotAPI, update *tgbotapi.Update, ctx context.Co
 	log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 	fmt.Println()
 
-	if anxiety.HandleAnxietyMessage(bot, update, ctx, conn) {
-		return // сообщение обработано SM
+	if anxiety.HandleAnxietyWriteDetCause(bot, update, ctx, conn) {
+		return // сообщение обработано
 	}
 
 	switch {
 
 	case update.Message.Text == "/start":
 		menu.Start(bot, update.Message.Chat.ID)
-		state.StateMachine[update.Message.Chat.ID] = []state.State{}
-		state.StateMachine[update.Message.Chat.ID] = append(state.StateMachine[update.Message.Chat.ID], "start_")
+		state.StateHistory[update.Message.Chat.ID] = []state.State{}
+		state.StateHistory[update.Message.Chat.ID] = append(state.StateHistory[update.Message.Chat.ID], "start_")
 
 	case update.Message.Text == "В начало":
-		state.StateMachine[update.Message.Chat.ID] = []state.State{}
-		state.StateMachine[update.Message.Chat.ID] = append(state.StateMachine[update.Message.Chat.ID], "start_")
-		menu.SendFuncs(bot, update.Message.Chat.ID, 0, false)
+		state.StateHistory[update.Message.Chat.ID] = []state.State{}
+		state.StateHistory[update.Message.Chat.ID] = append(state.StateHistory[update.Message.Chat.ID], "start_")
+		state.StateHistory[update.Message.Chat.ID] = append(state.StateHistory[update.Message.Chat.ID], state.StateStart)
+		menu.SendFuncs(bot, update, false)
 
 	default:
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Не рабочее че то")
